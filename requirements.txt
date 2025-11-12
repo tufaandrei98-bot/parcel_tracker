@@ -4,3 +4,4 @@ SQLAlchemy==2.0.44
 pydantic==2.12.3
 python-dateutil==2.9.0.post0
 pytest==9.0.0
+pytest-freezegun==0.4.2
