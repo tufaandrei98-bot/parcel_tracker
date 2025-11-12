@@ -195,7 +195,7 @@ Un API simplu pentru urmarirea coletelor. Fara frontend. Persistenta in SQLite.
 
 ### 9.3 Structura directoare propusa
 
-```properties
+```
 parcel-tracker/
   app/
     __init__.py
@@ -444,7 +444,7 @@ Eroare 400 (interval invalid):
        * Logic:
            1. Modificați parametrul status: `Optional[str]` pentru a accepta o listă de string-uri, folosind Query de la FastAPI: status: `Optional[List[str]] = Query(None)`.
            2. FastAPI va transforma automat o interogare de tipul `?status=val1&status=val2` într-o listă Python.
-           3. Înlocuiți condiția `models.Parcel.status == status` cu `models.Parcel.status.in_(status)`, unde status va fi acum lista de statusuri.
+           3. Înlocuiți condiția `Parcel.status == status` cu `Parcel.status.in_(status)`, unde status va fi acum lista de statusuri.
 
 #### 2. Validare număr de telefon pentru client
 
@@ -464,8 +464,8 @@ Eroare 400 (interval invalid):
        * Fișier: `app/routers/scans.py`
        * Funcție: `list_scans()`
        * Logic:
-           1. În loc să preluați `parcel.scans` și să sortați în memorie, creați o interogare `select(models.Scan)`
-           2. Filtrați după parcel_id: `stmt = select(models.Scan).where(models.Scan.parcel_id == parcel.id)`
+           1. În loc să preluați `parcel.scans` și să sortați în memorie, creați o interogare `select(Scan)`
+           2. Filtrați după parcel_id: `stmt = select(Scan).where(Scan.parcel_id == parcel.id)`
            3. Refolosiți funcțiile `parse_sort` și `apply_sort` (le puteți importa din customers.py sau le puteți muta într-un fișier utilitar) pentru a aplica sortarea pe câmpurile Scan (ex: ts, location).
            4. Aplicați paginarea cu `.offset((page - 1) * size).limit(size)`
            5. Executați interogarea și returnați rezultatele.

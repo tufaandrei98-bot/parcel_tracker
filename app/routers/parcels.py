@@ -34,7 +34,7 @@ def create_parcel_endpoint(payload: ParcelCreate, db: Session = Depends(get_db))
 @router.get("", response_model=List[ParcelOut])
 def list_parcels(
     db: Session = Depends(get_db),
-    status: Optional[str] = None,
+    status: Optional[List[str]] = Query(None),
     customer_id: Optional[int] = None,
     q: Optional[str] = None,
     page: int = Query(1, ge=1),
@@ -44,7 +44,7 @@ def list_parcels(
     stmt = select(Parcel)
 
     if status:
-        stmt = stmt.where(Parcel.status == status)
+        stmt = stmt.where(Parcel.status.in_(status))
     if customer_id:
         stmt = stmt.where(Parcel.customer_id == customer_id)
     if q:
