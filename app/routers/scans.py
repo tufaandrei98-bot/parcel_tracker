@@ -4,15 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
-from app import models, schemas
+from app.schemas import ScanOut, ScanCreate
 from app.services.parcels import find_parcel_by_code, apply_scan_transition
 
 router = APIRouter(prefix="/parcels", tags=["scans"])
 
 
-@router.post("/{tracking_code}/scans", response_model=schemas.ScanOut, status_code=201)
+@router.post("/{tracking_code}/scans", response_model=ScanOut, status_code=201)
 def add_scan(
-    tracking_code: str, payload: schemas.ScanCreate, db: Session = Depends(get_db)
+    tracking_code: str, payload: ScanCreate, db: Session = Depends(get_db)
 ):
     parcel = find_parcel_by_code(db, tracking_code)
     if not parcel:
@@ -31,7 +31,7 @@ def add_scan(
         raise HTTPException(409, str(e))
 
 
-@router.get("/{tracking_code}/scans", response_model=List[schemas.ScanOut])
+@router.get("/{tracking_code}/scans", response_model=List[ScanOut])
 def list_scans(
     tracking_code: str,
     db: Session = Depends(get_db),

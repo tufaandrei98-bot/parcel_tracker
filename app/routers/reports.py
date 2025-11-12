@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
-from app import models
+from app.models import Parcel
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -30,9 +30,9 @@ def parcels_by_status(
     dt_to_end = dt_to + timedelta(days=1)
 
     stmt = (
-        select(models.Parcel.status, func.count(models.Parcel.id))
-        .where(models.Parcel.created_at >= dt_from, models.Parcel.created_at < dt_to_end)
-        .group_by(models.Parcel.status)
+        select(Parcel.status, func.count(Parcel.id))
+        .where(Parcel.created_at >= dt_from, Parcel.created_at < dt_to_end)
+        .group_by(Parcel.status)
     )
     rows = db.execute(stmt).all()
 

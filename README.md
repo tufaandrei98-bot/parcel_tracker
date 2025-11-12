@@ -542,3 +542,26 @@ Eroare 400 (interval invalid):
 * Postgres in loc de SQLite
 * Observabilitate: logging structurat, request ID, simple metrics
 * Frontend mic pentru vizualizare timeline
+
+## 14. Tests
+
+### Setup
+```shell
+pip install pytest
+```
+
+### Run all tests
+```shell
+pytest -q
+```
+
+### Run a single file or test
+```shell
+pytest -q tests/test_codes.py::test_build_tracking_code_basic
+```
+
+### With coverage (optional)
+```shell
+pip install pytest-cov
+pytest --cov=app --cov-report=term-missing
+```

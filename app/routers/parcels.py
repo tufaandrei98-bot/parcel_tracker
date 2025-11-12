@@ -5,20 +5,21 @@ from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
-from app import models, schemas
+from app.models import Parcel, Customer
+from app.schemas import ParcelOut, ParcelCreate, TimelineOut
 from app.services.parcels import find_parcel_by_code, create_parcel
 from app.routers.customers import parse_sort, apply_sort
 
 router = APIRouter(prefix="/parcels", tags=["parcels"])
 
 
-@router.post("", response_model=schemas.ParcelOut, status_code=201)
-def create_parcel_endpoint(payload: schemas.ParcelCreate, db: Session = Depends(get_db)):
-    customer = db.get(models.Customer, payload.customer_id)
+@router.post("", response_model=ParcelOut, status_code=201)
+def create_parcel_endpoint(payload: ParcelCreate, db: Session = Depends(get_db)):
+    customer = db.get(Customer, payload.customer_id)
     if not customer:
         raise HTTPException(404, "customer not found")
 
-    parcel = models.Parcel(
+    parcel = Parcel(
         tracking_code="TMP",  # temporary; will be replaced in service after flush
         customer_id=payload.customer_id,
         status="new",
@@ -30,7 +31,7 @@ def create_parcel_endpoint(payload: schemas.ParcelCreate, db: Session = Depends(
     return parcel
 
 
-@router.get("", response_model=List[schemas.ParcelOut])
+@router.get("", response_model=List[ParcelOut])
 def list_parcels(
     db: Session = Depends(get_db),
     status: Optional[str] = None,
@@ -40,32 +41,32 @@ def list_parcels(
     size: int = Query(20, ge=1, le=100),
     sort: str = "created_at,desc",
 ):
-    stmt = select(models.Parcel)
+    stmt = select(Parcel)
 
     if status:
-        stmt = stmt.where(models.Parcel.status == status)
+        stmt = stmt.where(Parcel.status == status)
     if customer_id:
-        stmt = stmt.where(models.Parcel.customer_id == customer_id)
+        stmt = stmt.where(Parcel.customer_id == customer_id)
     if q:
         like = f"%{q}%"
         stmt = stmt.where(
             or_(
-                models.Parcel.tracking_code.ilike(like),
-                models.Parcel.addr_from.ilike(like),
-                models.Parcel.addr_to.ilike(like),
+                Parcel.tracking_code.ilike(like),
+                Parcel.addr_from.ilike(like),
+                Parcel.addr_to.ilike(like),
             )
         )
 
     field, order = parse_sort(
         sort, {"created_at", "status", "id", "tracking_code", "delivered_at"}, "created_at"
     )
-    stmt = apply_sort(stmt, models.Parcel, field, order)
+    stmt = apply_sort(stmt, Parcel, field, order)
     stmt = stmt.offset((page - 1) * size).limit(size)
     rows = db.execute(stmt).scalars().all()
     return rows
 
 
-@router.get("/{tracking_code}", response_model=schemas.ParcelOut)
+@router.get("/{tracking_code}", response_model=ParcelOut)
 def get_parcel(tracking_code: str, db: Session = Depends(get_db)):
     parcel = find_parcel_by_code(db, tracking_code)
     if not parcel:
@@ -73,7 +74,7 @@ def get_parcel(tracking_code: str, db: Session = Depends(get_db)):
     return parcel
 
 
-@router.get("/{tracking_code}/timeline", response_model=schemas.TimelineOut)
+@router.get("/{tracking_code}/timeline", response_model=TimelineOut)
 def get_timeline(tracking_code: str, db: Session = Depends(get_db)):
     parcel = find_parcel_by_code(db, tracking_code)
     if not parcel:
@@ -81,7 +82,7 @@ def get_timeline(tracking_code: str, db: Session = Depends(get_db)):
     # order scans by ts asc
     scans = sorted(parcel.scans, key=lambda s: s.ts)
     events = [
-        schemas.TimelineEvent(ts=s.ts, type=s.type, location=s.location, note=s.note)
+        TimelineEvent(ts=s.ts, type=s.type, location=s.location, note=s.note)
         for s in scans
     ]
-    return schemas.TimelineOut(tracking_code=tracking_code, events=events)
+    return TimelineOut(tracking_code=tracking_code, events=events)

@@ -5,21 +5,22 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
-from app import models, schemas
+from app.models import Customer
+from app.schemas import CustomerOut, CustomerCreate, CustomerUpdate
 
 router = APIRouter(prefix="/customers", tags=["customers"])
 
 
-@router.post("", response_model=schemas.CustomerOut, status_code=201)
-def create_customer(payload: schemas.CustomerCreate, db: Session = Depends(get_db)):
-    customer = models.Customer(name=payload.name, phone=payload.phone)
+@router.post("", response_model=CustomerOut, status_code=201)
+def create_customer(payload: CustomerCreate, db: Session = Depends(get_db)):
+    customer = Customer(name=payload.name, phone=payload.phone)
     db.add(customer)
     db.commit()
     db.refresh(customer)
     return customer
 
 
-@router.get("", response_model=List[schemas.CustomerOut])
+@router.get("", response_model=List[CustomerOut])
 def list_customers(
     db: Session = Depends(get_db),
     search: Optional[str] = None,
@@ -27,30 +28,30 @@ def list_customers(
     size: int = Query(20, ge=1, le=100),
     sort: str = "created_at,desc",
 ):
-    stmt = select(models.Customer)
+    stmt = select(Customer)
     if search:
         like = f"%{search}%"
-        stmt = stmt.where(models.Customer.name.ilike(like))
+        stmt = stmt.where(Customer.name.ilike(like))
     field, order = parse_sort(sort, {"created_at", "name", "id"}, default="created_at")
-    stmt = apply_sort(stmt, models.Customer, field, order)
+    stmt = apply_sort(stmt, Customer, field, order)
     stmt = stmt.offset((page - 1) * size).limit(size)
     rows = db.execute(stmt).scalars().all()
     return rows
 
 
-@router.get("/{customer_id}", response_model=schemas.CustomerOut)
+@router.get("/{customer_id}", response_model=CustomerOut)
 def get_customer(customer_id: int, db: Session = Depends(get_db)):
-    obj = db.get(models.Customer, customer_id)
+    obj = db.get(Customer, customer_id)
     if not obj:
         raise HTTPException(404, "customer not found")
     return obj
 
 
-@router.put("/{customer_id}", response_model=schemas.CustomerOut)
+@router.put("/{customer_id}", response_model=CustomerOut)
 def update_customer(
-    customer_id: int, payload: schemas.CustomerUpdate, db: Session = Depends(get_db)
+    customer_id: int, payload: CustomerUpdate, db: Session = Depends(get_db)
 ):
-    obj = db.get(models.Customer, customer_id)
+    obj = db.get(Customer, customer_id)
     if not obj:
         raise HTTPException(404, "customer not found")
     if payload.name is not None:
@@ -64,7 +65,7 @@ def update_customer(
 
 @router.delete("/{customer_id}", status_code=204)
 def delete_customer(customer_id: int, db: Session = Depends(get_db)):
-    obj = db.get(models.Customer, customer_id)
+    obj = db.get(Customer, customer_id)
     if not obj:
         raise HTTPException(404, "customer not found")
     db.delete(obj)

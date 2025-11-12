@@ -36,7 +36,7 @@ def create_parcel(db: Session, payload: Parcel, customer_id: int) -> Parcel:
     return payload
 
 
-def find_parcel_by_code(db: Session, code: str) -> Parcel | None:
+def find_parcel_by_code(db: Session, code: str) -> Parcel:
     stmt = select(Parcel).where(Parcel.tracking_code == code)
     return db.execute(stmt).scalar_one_or_none()
 
