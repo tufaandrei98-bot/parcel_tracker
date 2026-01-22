@@ -13,12 +13,12 @@ class PageParams(BaseModel):
 # Customers
 class CustomerCreate(BaseModel):
     name: str = Field(min_length=1, max_length=80)
-    phone: Optional[str] = Field(default=None, max_length=32)
+    phone: Optional[str] = Field(pattern=r'^[0-9 +()-]{7,20}$')
 
 
 class CustomerUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=80)
-    phone: Optional[str] = Field(default=None, max_length=32)
+    phone: Optional[str] = Field(pattern=r'^[0-9 +()-]{7,20}$')
 
 
 class CustomerOut(BaseModel):
